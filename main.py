@@ -12,24 +12,24 @@ def load_stream():
     """
     Checks and loads all streams existing in accounts.txt
     """
-
-    pop_list = []
-
     if not os.path.exists('accounts.txt'):
         print("accounts.txt doesn't exist. Exiting application")
         exit()
 
+    # rstrip removes \n from the read lines
     with open('accounts.txt', 'r') as file:
         rtsp_list = [line.rstrip() for line in file.readlines()]
         file.close()
 
+    # reversed(list(enumerate(rtsp_list))) creates reversed index and object
+    # instead of checking 0, rtsp 1 at the first iteration, start at the end instead
     for i, stream in reversed(list(enumerate(rtsp_list))):
         cap = cv2.VideoCapture(stream)
         if not cap.isOpened():
             print(f"Error: Cannot open the RTSP stream {stream}")
             rtsp_list.pop(i)
         else:
-            print("RTSP stream opened successfully")
+            print(f"RTSP stream {i} opened successfully")
             cap.release()
 
     # Check if list is empty. Empty = False. Not False = True
@@ -43,6 +43,8 @@ class VideoThread(QThread):
     # Signal emitted when a new image or a new frame is ready
     change_pixmap_signal = pyqtSignal(np.ndarray, int)
 
+    # Receive RTSP and QLabel it is assigned to
+    # main_stream QLabel is assigned to display RTSP at index 1
     def __init__(self, rtsp, stream_label):
         super().__init__()
         self.rtsp = rtsp
@@ -50,7 +52,6 @@ class VideoThread(QThread):
         self._run_flag = True
 
     def run(self):
-        # Capture video from the default camera (index 0)
         cap = cv2.VideoCapture(self.rtsp)
         while self._run_flag and cap.isOpened():
             ret, frame = cap.read()
@@ -70,6 +71,7 @@ class MainUI(QMainWindow):
     def __init__(self, rtsp_list):
         super(MainUI, self).__init__()
 
+        # Load the UI created from designer
         loadUi("mainui.ui", self)
 
         self.labels = [self.main_stream, self.stream_2, self.stream_3]
@@ -108,7 +110,6 @@ class MainUI(QMainWindow):
 
 if __name__ == "__main__":
     rtsp_list = load_stream()
-    print(rtsp_list)
     app = QApplication(sys.argv)
     ui = MainUI(rtsp_list)
     ui.show()
