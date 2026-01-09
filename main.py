@@ -8,16 +8,24 @@ import os
 import sys
 import time
 
+def resource_path(relative_path):
+    """ 
+    Get absolute path to resource, works for dev and for PyInstaller
+    """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
 def load_stream():
     """
     Checks and loads all streams existing in accounts.txt
     """
-    if not os.path.exists('accounts.txt'):
+    accounts_path = 'resources/streams/accounts.txt'
+    if not os.path.exists(resource_path(accounts_path)):
         print("accounts.txt doesn't exist. Exiting application")
         exit()
 
     # rstrip removes \n from the read lines
-    with open('accounts.txt', 'r') as file:
+    with open(accounts_path, 'r') as file:
         rtsp_list = [line.rstrip() for line in file.readlines()]
         file.close()
 
@@ -72,7 +80,10 @@ class MainUI(QMainWindow):
         super(MainUI, self).__init__()
 
         # Load the UI created from designer
-        loadUi("mainui.ui", self)
+        loadUi("resources/ui/mainui.ui", self)
+        
+        self.setWindowIcon(QIcon(resource_path('resources/images/eye_icon.png')))
+        self.setWindowTitle("Watchmen")
 
         self.labels = [self.main_stream, self.stream_2, self.stream_3]
         self.threads = []
