@@ -19,8 +19,8 @@ def load_stream():
     """
     Checks and loads all streams existing in accounts.txt
     """
-    accounts_path = 'resources/streams/accounts.txt'
-    if not os.path.exists(resource_path(accounts_path)):
+    accounts_path = resource_path('resources/streams/accounts.txt')
+    if not os.path.exists(accounts_path):
         print("accounts.txt doesn't exist. Exiting application")
         exit()
 
@@ -80,7 +80,7 @@ class MainUI(QMainWindow):
         super(MainUI, self).__init__()
 
         # Load the UI created from designer
-        loadUi("resources/ui/mainui.ui", self)
+        loadUi(resource_path("resources/ui/mainui.ui"), self)
         
         self.setWindowIcon(QIcon(resource_path('resources/images/eye_icon.png')))
         self.setWindowTitle("Watchmen")
