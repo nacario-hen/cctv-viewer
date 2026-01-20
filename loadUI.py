@@ -1,14 +1,15 @@
 """
 Contains UI related code
 """
-
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from PyQt5.uic import loadUi
 import utilities as util
 import videof
 import cv2
+import math
 
 class MainUI(QMainWindow, videof.StreamMethods):
     def __init__(self, rtsp_list):
@@ -37,3 +38,66 @@ class MainUI(QMainWindow, videof.StreamMethods):
             thread.stop()
         event.accept()
 
+class UIversion2(QMainWindow, videof.StreamMethods):
+    def __init__(self, rtsp_list):
+        super(UIversion2, self).__init__()
+
+        self.rtsp_list = rtsp_list
+        rtsp_count = len(rtsp_list)
+        self.column_count = math.ceil(rtsp_count/3)
+        self.move(0, 0)
+        self.setWindowIcon(QIcon(util.resource_path('resources/images/eye_icon.png')))
+        self.setWindowTitle("Watchmen V2")
+        self.initUI()
+
+    def initUI(self):
+        # Declare variables
+        self.vBoxList = []
+        self.labelList = []
+        count = 0
+        rtsp_count = 0
+        limit = len(self.rtsp_list)
+
+        centralWidget = QWidget()
+        self.setCentralWidget(centralWidget)
+        self.setBaseSize(150, 150)
+        
+        self.hLayout = QHBoxLayout()
+        self.gLayout = QGridLayout()
+        centralWidget.setLayout(self.hLayout)
+
+        # Create VBoxLayout that houses 3 labels
+        while count < self.column_count:
+            vBoxLayout = QVBoxLayout()
+            self.vBoxList.append(vBoxLayout)
+            self.hLayout.addLayout(self.vBoxList[count])
+            
+            # Inner loop fills VBoxLayout with 3 labels each
+            while rtsp_count < limit:
+                label = QLabel(f"{self.rtsp_list[rtsp_count]}")
+                label.setFixedSize(360, 240)
+                label.setStyleSheet("text-align:center;")
+                self.labelList.append(label)
+                vBoxLayout.addWidget(self.labelList[rtsp_count])
+                rtsp_count += 1
+                
+                if (rtsp_count % 3) == 0:
+                    break
+            
+            count += 1
+
+        # Refer to the last column/VBoxLayout
+        count -= 1
+
+        # Fill last column/VBoxLayout with dummy QLabels
+        while (rtsp_count % 3) != 0:
+            self.vBoxList[count].addWidget(QLabel("Dummy"))
+            rtsp_count += 1
+
+        vBoxLayout = QVBoxLayout()
+        label = QLabel("Main Window")
+        label.setFixedSize(720, 720)
+        self.labelList.append(label)
+        vBoxLayout.addWidget(label)
+        self.vBoxList.append(vBoxLayout)
+        self.hLayout.addLayout(vBoxLayout)
