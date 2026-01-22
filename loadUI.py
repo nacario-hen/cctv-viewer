@@ -1,10 +1,8 @@
 """
 Contains UI related code
 """
-from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QWidget
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt
 from PyQt5.uic import loadUi
 import utilities as util
 import videof
@@ -52,8 +50,9 @@ class UIversion2(QMainWindow, videof.StreamMethods):
 
     def initUI(self):
         # Declare variables
-        self.vBoxList = []
-        self.labelList = []
+        self.vBoxes = []
+        self.labels = []
+        self.threads = []
         count = 0
         rtsp_count = 0
         limit = len(self.rtsp_list)
@@ -69,16 +68,22 @@ class UIversion2(QMainWindow, videof.StreamMethods):
         # Create VBoxLayout that houses 3 labels
         while count < self.column_count:
             vBoxLayout = QVBoxLayout()
-            self.vBoxList.append(vBoxLayout)
-            self.hLayout.addLayout(self.vBoxList[count])
-            
+            self.vBoxes.append(vBoxLayout)
+            self.hLayout.addLayout(self.vBoxes[count])
+
             # Inner loop fills VBoxLayout with 3 labels each
             while rtsp_count < limit:
-                label = QLabel(f"{self.rtsp_list[rtsp_count]}")
+                label = QLabel()
                 label.setFixedSize(360, 240)
-                label.setStyleSheet("text-align:center;")
-                self.labelList.append(label)
-                vBoxLayout.addWidget(self.labelList[rtsp_count])
+                self.labels.append(label)
+                vBoxLayout.addWidget(self.labels[rtsp_count])
+
+                thread = videof.VideoThread(self.rtsp_list[rtsp_count], rtsp_count)
+                # Connect the signal to the update_image slot
+                thread.change_pixmap_signal.connect(self.update_image)
+                self.threads.append(thread)
+                thread.start()
+
                 rtsp_count += 1
                 
                 if (rtsp_count % 3) == 0:
@@ -91,13 +96,34 @@ class UIversion2(QMainWindow, videof.StreamMethods):
 
         # Fill last column/VBoxLayout with dummy QLabels
         while (rtsp_count % 3) != 0:
-            self.vBoxList[count].addWidget(QLabel("Dummy"))
+            self.vBoxes[count].addWidget(QLabel("Dummy"))
             rtsp_count += 1
 
+        # Create another column for the main stream
         vBoxLayout = QVBoxLayout()
-        label = QLabel("Main Window")
+        label = QLabel()
         label.setFixedSize(720, 720)
-        self.labelList.append(label)
+        self.labels.append(label)
         vBoxLayout.addWidget(label)
-        self.vBoxList.append(vBoxLayout)
+
+        # Set DEFAULT main stream to display rtsp #1 (rtsp_list[0])
+        self.setMainStream(2)
+
+        self.vBoxes.append(vBoxLayout)
         self.hLayout.addLayout(vBoxLayout)
+
+    def setMainStream(self, rtsp_id):
+        if len(self.threads) != len(self.rtsp_list):
+            self.threads[-1].stop()
+        self.main_stream = self.rtsp_list[rtsp_id]
+        thread = videof.VideoThread(self.main_stream, -1)
+        # Connect the signal to the update_image slot
+        thread.change_pixmap_signal.connect(self.update_image)
+        self.threads.append(thread)
+        thread.start()
+
+    def closeEvent(self, event):
+        """Called automatically when the window is closed"""
+        for thread in self.threads:
+            thread.stop()
+        event.accept()
