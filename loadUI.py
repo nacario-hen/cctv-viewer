@@ -2,12 +2,27 @@
 Contains UI related code
 """
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QWidget
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.uic import loadUi
 import utilities as util
 import videof
 import cv2
 import math
+
+class ClickableVideoLabel(QLabel):
+    # Create a custom signal that we can connect to a function
+    clicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def mousePressEvent(self, event):
+        # This function runs automatically when the label is clicked
+        if event.button() == Qt.LeftButton:
+            self.clicked.emit()
+    
+    # To-do: Modify cursor on mouse hover over labels
 
 class MainUI(QMainWindow, videof.StreamMethods):
     def __init__(self, rtsp_list):
@@ -73,9 +88,10 @@ class UIversion2(QMainWindow, videof.StreamMethods):
 
             # Inner loop fills VBoxLayout with 3 labels each
             while rtsp_count < limit:
-                label = QLabel()
+                label = ClickableVideoLabel()
                 label.setFixedSize(360, 240)
                 self.labels.append(label)
+                self.labels[rtsp_count].clicked.connect(lambda val = rtsp_count: self.setMainStream(val))
                 vBoxLayout.addWidget(self.labels[rtsp_count])
 
                 thread = videof.VideoThread(self.rtsp_list[rtsp_count], rtsp_count)
@@ -107,13 +123,13 @@ class UIversion2(QMainWindow, videof.StreamMethods):
         vBoxLayout.addWidget(label)
 
         # Set DEFAULT main stream to display rtsp #1 (rtsp_list[0])
-        self.setMainStream(2)
+        self.setMainStream(0)
 
         self.vBoxes.append(vBoxLayout)
         self.hLayout.addLayout(vBoxLayout)
 
     def setMainStream(self, rtsp_id):
-        if len(self.threads) != len(self.rtsp_list):
+        if len(self.threads) > len(self.rtsp_list):
             self.threads[-1].stop()
         self.main_stream = self.rtsp_list[rtsp_id]
         thread = videof.VideoThread(self.main_stream, -1)
