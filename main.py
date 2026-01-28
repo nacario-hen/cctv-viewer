@@ -5,6 +5,7 @@ import loadUI as UI
 
 if __name__ == "__main__":
 
+    util.logging.info("Program start")
     rtsp_list = util.load_stream()
     app = QApplication(sys.argv)
     ui = UI.UIversion2(rtsp_list)

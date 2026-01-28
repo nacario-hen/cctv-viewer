@@ -5,6 +5,8 @@ Contains utility functions
 import os
 import sys
 import cv2
+import logging
+import datetime
 
 def resource_path(relative_path):
     """ 
@@ -19,7 +21,7 @@ def load_stream():
     """
     accounts_path = resource_path('resources/streams/accounts.txt')
     if not os.path.exists(accounts_path):
-        print("accounts.txt doesn't exist. Exiting application")
+        logging.debug("accounts.txt doesn't exist. Exiting application")
         exit()
 
     # rstrip removes \n from the read lines
@@ -32,15 +34,19 @@ def load_stream():
     for i, stream in reversed(list(enumerate(rtsp_list))):
         cap = cv2.VideoCapture(stream)
         if not cap.isOpened():
-            print(f"Error: Cannot open the RTSP stream {stream}")
+            logging.info(f"Cannot open RTSP stream {i}")
             rtsp_list.pop(i)
         else:
-            print(f"RTSP stream {i} opened successfully")
+            logging.info(f"RTSP stream {i} opened successfully")
             cap.release()
 
     # Check if list is empty. Empty = False. Not False = True
     if not rtsp_list:
-        print("No active CCTV to stream")
+        logging.debug("No active CCTV to stream")
         exit()
 
     return rtsp_list
+
+logfname = resource_path(f'resources/log/[{datetime.datetime.now().strftime('%m-%d-%Y')}]log.log')
+logging.basicConfig(level=logging.DEBUG, filename=resource_path(logfname), filemode="a",
+                    format="[%(asctime)s|%(funcName)s|%(levelname)s] - %(message)s")
